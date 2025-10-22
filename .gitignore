@@ -1,0 +1,42 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+.next
+dist
+dist-ssr
+out
+*.local
+
+# App packages
+apps/web/node_modules
+apps/web/.next
+packages/**/node_modules
+backend/.venv
+backend/__pycache__
+
+# Python artifacts
+*.pyc
+*.pyo
+*.pyd
+
+# Foundry
+contracts/cache
+contracts/out
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

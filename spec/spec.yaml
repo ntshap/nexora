@@ -1,0 +1,203 @@
+version: 0.1.0
+metadata:
+  product: NEXORA
+  description: >
+    NEXORA is a non-custodial DeFi co-pilot for creative professionals.
+    It delivers personalised yield plans, ERC-4626 vault access, and a
+    transparent portfolio dashboard backed by FastAPI services and Solidity contracts.
+  status: draft
+  targetRelease: 2025-10-30
+personas:
+  - id: indie_musician
+    name: Indie Musician
+    summary: Performs gigs and streams music with irregular cash flow.
+    goals:
+      - Automate monthly deposits into yield strategies.
+      - Preserve custody of funds while understanding risks.
+    painPoints:
+      - Lacks time to research DeFi protocols.
+      - Fears losing funds on unfamiliar platforms.
+  - id: freelance_designer
+    name: Freelance Designer
+    summary: Contract-based income, uses hardware wallet for savings.
+    goals:
+      - Grow savings with diversified plans.
+      - See risk versus return clearly.
+    painPoints:
+      - Overwhelmed by DeFi jargon.
+      - Skeptical of opaque custodial services.
+  - id: digital_artist
+    name: Digital Artist
+    summary: Sells NFTs and royalties, already holds crypto assets.
+    goals:
+      - Earn yield on holdings without giving up control.
+      - Trustworthy UX that clarifies where funds go.
+    painPoints:
+      - Unsure which vaults are safe.
+      - Requires ethical, transparent tooling.
+assumptions:
+  - Users connect via EVM-compatible wallets (MetaMask, WalletConnect).
+  - Sepolia testnet liquidity and mock USDC faucet remain available during MVP.
+  - Initial risk scoring logic can be rule-based; ML/AI upgrades are deferred.
+  - Portfolio history may initially come from local persistence before The Graph integration.
+features:
+  - id: wallet_connect
+    name: Wallet Connection
+    description: Allow creatives to connect wallets, validate Sepolia network, and maintain non-custodial control.
+    userStories:
+      - As a creative investor, I want to connect MetaMask so I can interact with NEXORA vaults.
+      - As a user, I want a warning when I am on the wrong chain so I can switch to Sepolia.
+    acceptanceCriteria:
+      - Wallet connection works with MetaMask/WalletConnect.
+      - Application detects unsupported networks and prompts user to switch.
+      - No private keys or signatures are stored off-chain.
+  - id: risk_plan_generation
+    name: Risk Profiling & Plan Generation
+    description: Collect risk inputs and return three recommended strategies via FastAPI.
+    personas: [indie_musician, freelance_designer]
+    userStories:
+      - As a user, I want to submit my risk score and horizon so that I receive tailored plan options.
+    inputs:
+      - risk_score (1-10)
+      - horizon_months (1-60)
+      - stablecoin_preference (enum: USDC, DAI)
+    outputs:
+      - plans array containing name, riskLevel, estAPY, allocations.
+    acceptanceCriteria:
+      - POST /plan returns Conservative, Balanced, Growth plans with distinct allocations.
+      - Invalid inputs return 400 with validation message.
+      - Response time under 100ms on local benchmark.
+  - id: vault_interactions
+    name: Vault Deposit & Withdrawal
+    description: Enable users to deposit into / withdraw from ERC-4626 vault contracts.
+    personas: [digital_artist]
+    userStories:
+      - As a depositor, I want to approve and deposit USDC into a vault to earn yield.
+      - As a user, I want to withdraw my shares anytime to retain custody.
+    acceptanceCriteria:
+      - Frontend triggers approval then deposit/withdraw transactions with correct parameters.
+      - Smart contract enforces max deposit cap and is pausable.
+      - Tx service logs requests (stub) for future observability.
+  - id: portfolio_dashboard
+    name: Portfolio Dashboard
+    description: Provide real-time view of balances, shares, APY, and activity history.
+    personas: [indie_musician, digital_artist]
+    userStories:
+      - As an investor, I want to see my vault share balances and APY so I can track performance.
+      - As a user, I want to review deposit/withdraw history for accounting.
+    acceptanceCriteria:
+      - Dashboard reads on-chain balances via wagmi/viem with no errors.
+      - Displays estimated APY and plan metadata from backend.
+      - Shows chronological activity list (stubbed from DB until subgraph integration).
+  - id: platform_health
+    name: Health & Admin Observability
+    description: Provide health endpoint and basic admin-ready stubs for future monitoring.
+    userStories:
+      - As an operator, I need a health check to plug into deployment probes.
+    acceptanceCriteria:
+      - GET /health returns {"status":"ok"}.
+      - Backend logs requests and handles rate-limited validation errors gracefully.
+api:
+  routes:
+    - id: health_check
+      method: GET
+      path: /health
+      description: Readiness probe for backend.
+      response:
+        status: 200
+        body:
+          status: ok
+    - id: create_plan
+      method: POST
+      path: /plan
+      description: Generate tailored investment plans based on risk inputs.
+      request:
+        body:
+          risk_score: integer (1-10)
+          horizon_months: integer (>=1)
+          stablecoin_preference: string (USDC|DAI)
+      responses:
+        - status: 200
+          body:
+            plans:
+              - name: Conservative
+                estAPY: number
+                allocations: map
+        - status: 400
+          body:
+            error: validation_error
+    - id: get_portfolio
+      method: GET
+      path: /portfolio/{address}
+      description: Return aggregate position data for a wallet address.
+      responses:
+        - status: 200
+          body:
+            address: string
+            vaults: list
+            history: list
+    - id: log_deposit
+      method: POST
+      path: /tx/deposit
+      description: Stub endpoint for deposit logging.
+      responses:
+        - status: 200
+          body:
+            status: deposit stub
+    - id: log_withdraw
+      method: POST
+      path: /tx/withdraw
+      description: Stub endpoint for withdrawal logging.
+      responses:
+        - status: 200
+          body:
+            status: withdraw stub
+contracts:
+  - name: SynthVault
+    description: >
+      ERC-4626 compliant vault holding mock USDC with pausable controls and max deposit cap.
+    functions:
+      - name: deposit
+        description: Deposit assets and mint vault shares.
+        params: [assets, receiver]
+      - name: withdraw
+        description: Withdraw assets by burning shares.
+        params: [assets, receiver, owner]
+      - name: pause
+      - name: unpause
+      - name: setDepositCap
+  - name: AdapterAaveMock
+    description: Mock adapter representing integration with Aave-like protocol.
+    functions:
+      - name: supply
+      - name: redeem
+  - name: MockUSDC
+    description: ERC-20 token used for testing on Sepolia.
+    functions:
+      - name: mint
+      - name: burn
+acceptanceCriteria:
+  - id: ac_wallet_connect
+    relatesTo: wallet_connect
+    criteria:
+      - Users can connect MetaMask and see address in UI.
+      - Network mismatch surfaces modal prompting Sepolia switch.
+  - id: ac_plan_api
+    relatesTo: risk_plan_generation
+    criteria:
+      - POST /plan returns three plans with distinct risk levels.
+      - Invalid payload returns HTTP 400 with error details.
+  - id: ac_vault_flows
+    relatesTo: vault_interactions
+    criteria:
+      - deposit() and withdraw() calls succeed against SynthVault on Sepolia testnet.
+      - Contract enforces pause and cap settings in tests.
+  - id: ac_portfolio_dashboard
+    relatesTo: portfolio_dashboard
+    criteria:
+      - Dashboard displays balances consistent with on-chain data.
+      - Activity feed shows latest transactions from backend stub.
+  - id: ac_health
+    relatesTo: platform_health
+    criteria:
+      - GET /health returns status ok for uptime probes.

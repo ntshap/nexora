@@ -1,0 +1,150 @@
+Product Requirements Document (PRD) – NEXORA
+1. Product Overview
+
+NEXORA is an AI‑powered decentralized finance (DeFi) platform designed to help creative professionals—artists, musicians, designers, freelancers—manage and grow their crypto wealth. NEXORA provides transparent, non‑custodial yield strategies tailored to user risk profiles. The platform combines a Web3 front‑end, a FastAPI back‑end and Solidity smart contracts that implement ERC‑4626 vaults. The goal is to make DeFi accessible to non‑technical creatives by automating yield planning and presenting clear analytics while allowing full user custody of funds.
+
+A product requirements document defines a product’s purpose, features, functions and behaviour
+atlassian.com
+. It serves as a shared framework so everyone—from designers to developers—understands what is being built and why
+atlassian.com
+.
+
+2. Problem Statement & Background
+
+Creative professionals often earn irregular income from multiple sources (royalties, commissions, gig payments). Traditional finance tools are not tailored for their needs; DeFi platforms can offer yield but are complex, risky and require technical knowledge. Many users are uncertain about depositing funds into on‑chain protocols or fear losing custody of their assets.
+
+NEXORA solves this by:
+
+Providing personalised yield strategies via AI risk profiling.
+
+Allowing users to earn yield through non‑custodial ERC‑4626 vaults, keeping keys in their control.
+
+Offering transparent analytics, with on‑chain data indexed via The Graph.
+
+Presenting an intuitive UI that hides complexity and focuses on outcomes.
+
+3. Goals & Objectives
+
+Business Goals
+
+Open a new market segment in the creative economy by enabling safe DeFi participation.
+
+Demonstrate compliance with regulatory expectations (e.g., OJK) by emphasising transparency and user protection.
+
+Achieve user growth and retention by offering a unique combination of AI and DeFi targeted at creatives.
+
+Product Objectives
+
+Build an end‑to‑end MVP by 22 October 2025 for the OJK‑Ekraf hackathon.
+
+Ensure the platform operates on Sepolia testnet (free) while designed for mainnet readiness.
+
+Deliver a high‑quality, clean codebase with minimal comments and no leftover templates.
+
+4. User Personas
+Persona	Description	Needs	Pain Points
+Indie Musician	25–40 years old; receives income from streaming, gigs and merchandise; limited knowledge of crypto	Easy way to invest small monthly income into high‑yield opportunities; transparent reporting; non‑custodial control	Fear of losing funds; complexity of DeFi; lacks time to research protocols
+Freelance Designer	20–35 years old; irregular payments from clients; uses a hardware wallet	Wants to grow earnings through diversified DeFi strategies; needs to know risk vs return; simple UI	Overwhelmed by DeFi jargon; no visibility on risk; worries about scams
+Digital Artist	18–30 years old; sells NFTs and receives royalties	Interested in earning yield on crypto holdings; wants full control of assets; values brand trust	Doesn’t know which protocols are safe; doesn’t trust custodial platforms; expects ethical practices
+5. Functional Requirements
+5.1 Wallet Connect (NFT & DeFi Access)
+
+Integrate with Metamask/WalletConnect to authenticate and sign transactions.
+
+Support Sepolia testnet chain; show network warning if user is on another network.
+
+Maintain non‑custodial nature: no private keys stored server‑side.
+
+5.2 Risk Profiling & Plan API
+
+Create a form for risk profile (inputs: risk score 1–10, investment horizon in months, stablecoin preference).
+
+Back‑end endpoint POST /plan accepts JSON payload and returns three plans (Conservative, Balanced, Growth) with estimated APY and asset allocation. For the MVP, implement rule‑based logic; AI integration may follow in future versions.
+
+Validate input values; return 400 if invalid.
+
+5.3 Vault Deposit & Withdrawal
+
+Provide UI components to deposit tokens into selected ERC‑4626 vaults (via deposit(amount, user)); user must approve token first.
+
+Provide UI to withdraw funds (withdraw(amount, user)); withdraw returns proportionate shares and resets allowances.
+
+Smart contract SynthVault.sol implements ERC‑4626 with Pausable and MaxDepositCap. Vault uses a mock USDC stablecoin on Sepolia.
+
+5.4 Portfolio Dashboard
+
+Display current token balance, shares held in each vault and estimated APY.
+
+Use viem/wagmi to read balanceOf(user) and totalAssets() from the vault.
+
+Show deposit/withdraw history (from local DB or The Graph when available).
+
+5.5 Backend Health & Admin
+
+GET /health returns { “status”: “ok” } for health checks.
+
+Provide stub endpoints for deposit/withdraw transaction logging (future integration with subgraph or database).
+
+6. Non‑Functional Requirements
+Category	Requirement
+Performance	API responses < 100 ms for non‑blocking endpoints; UI loads within 2 seconds on average connections
+Security	Non‑custodial design: private keys never leave user’s wallet; all contract functions follow checks‑effects‑interactions pattern; back‑end uses rate limiting and input validation; no injection vulnerabilities
+Scalability	Modular architecture: separate front‑end, back‑end, contracts, and SDK; ready to swap SQLite for PostgreSQL; easy to add new vaults or strategies
+Reliability	Automated tests for endpoints and contract functions; testnet deployment with stable RPC provider; error handling for chain connection failures
+Compliance	Transparent on‑chain transactions; proper handling of risk disclosures; ensure UI clarifies that returns are estimates and user holds responsibility
+7. Assumptions & Dependencies
+
+Sepolia testnet will remain available until hackathon ends; ERC‑20 mock tokens will have sufficient faucet supply.
+
+Users have an EVM‑compatible wallet and some test USDC.
+
+AI features (advanced risk analysis) may not be fully implemented in MVP; rule‑based logic is acceptable.
+
+External dependencies: The Graph for indexing, Wagmi/Viem for Web3 interactions, Spec Kit for code scaffolding.
+
+Regulatory compliance: follow guidelines for non‑custodial DeFi; no financial advice; emphasise risk disclaimer.
+
+8. Timeline & Milestones
+Milestone	Date (Assuming project start 22 Oct 2025)	Deliverables
+Spec & Architecture	1 day (22 Oct 2025)	spec.yaml finalised; architecture diagrams and problem‑solution document in docs/
+Backend & Contract Implementation	3 days (23 – 25 Oct 2025)	FastAPI endpoints (/plan, /portfolio, /health, stub TX); ERC‑4626 vault; Foundry tests
+Frontend Integration	3 days (26 – 28 Oct 2025)	Plans page, deposit/withdraw components, portfolio dashboard
+Testing & Polish	1 day (29 Oct 2025)	Unit tests; ensure clean code; remove unused files; rename to NEXORA
+Submission	30 Oct 2025	Demo deployment links; GitHub repo; pitch deck
+9. Acceptance Criteria
+
+Users can connect their wallet on Sepolia and see network prompts if on the wrong network.
+
+POST /plan returns three distinct investment plans based on input risk level; invalid input triggers 400 error.
+
+Deposit and withdraw actions call vault functions correctly; user retains full control of funds.
+
+Portfolio page accurately displays shares and asset value; reading from contract works with no errors.
+
+Codebase has no leftover template comments, no watermarks, and is fully clean and production‑like.
+
+Tests cover at least the happy path of each endpoint and contract function.
+
+10. Out‑of‑Scope / Future Work
+
+Live mainnet deployment and integration with real Aave/Compound strategies.
+
+Full AI integration for dynamic risk modelling (e.g., training models on market data).
+
+Mobile app version.
+
+Fiat on‑ramp/off‑ramp and tax calculation modules.
+
+Social/community features (leaderboards, collaboration between creatives).
+
+11. Metrics & Success Indicators
+
+Adoption: Number of users connecting wallet and generating plans.
+
+Engagement: Frequency of deposits/withdrawals; time spent in portfolio dashboard.
+
+Performance: API and contract call latency; number of errors reported.
+
+Retention: Percentage of users returning to check or modify their plan within a week.
+
+Compliance: Feedback from hackathon judges on transparency and clarity of risk disclosures.
