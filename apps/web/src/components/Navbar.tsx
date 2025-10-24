@@ -31,8 +31,6 @@ const defaultNavbar: NavbarConfig = {
     alt: "NEXORA Logo",
   },
   navLinks: [
-    { title: "Plans", url: "/plans" },
-    { title: "Portfolio", url: "/portfolio" },
     { title: "About", url: "/about" },
     {
       title: "Resources",
@@ -95,16 +93,16 @@ const Navbar = (props: NavbarProps) => {
   const isMobile = useIsMobile();
 
   return (
-    <section className="z-[999] flex w-full items-center border-b border-hero-text/10 px-6 sm:px-10 lg:px-16" style={{ backgroundColor: "#060612" }}>
-      <div className="mx-auto grid size-full max-w-5xl gap-4 py-[22px] px-4 sm:px-6 lg:grid-cols-[0.5fr_1fr_0.5fr] lg:items-center lg:justify-between">
+    <section className="z-[999] flex w-full items-center border-b border-hero-text/10 px-8 sm:px-14 lg:px-24" style={{ backgroundColor: "#060612" }}>
+      <div className="mx-auto grid size-full max-w-5xl gap-4 py-[26px] px-4 sm:px-6 lg:grid-cols-[0.6fr_1fr_0.4fr] lg:items-center lg:justify-between">
         <div className="flex min-h-16 items-center justify-between md:min-h-18 lg:min-h-full">
           <a href={logo.url} className="flex items-center">
             <Image
               src={logo.src}
               alt={logo.alt ?? "NEXORA"}
-              width={200}
-              height={56}
-              className="h-14 w-auto"
+              width={280}
+              height={82}
+              className="h-[74px] w-auto"
               priority
             />
           </a>

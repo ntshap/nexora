@@ -9,6 +9,7 @@ import FinalCTASection from "@/components/FinalCTASection";
 import Footer from "@/components/Footer";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
+import { BottomNav } from "@/components/dashboard/BottomNav";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
@@ -133,6 +134,7 @@ const PlansPage = () => {
         <FAQSection />
         <FinalCTASection />
         <Footer />
+        <BottomNav />
       </div>
     </>
   );

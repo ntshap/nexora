@@ -108,26 +108,6 @@ const HeroSection = () => (
         </div>
       </motion.div>
 
-      <motion.div
-        className="mt-12 flex w-full max-w-lg flex-col gap-8 self-stretch rounded-[32px] border border-white/5 bg-[#0f1020]/90 p-8 backdrop-blur lg:mt-0 lg:max-w-md"
-        variants={itemVariants}
-      >
-        <h2 className="text-xl font-manrope font-semibold text-hero-text">Why creators choose NEXORA</h2>
-        <ul className="space-y-4 text-left text-sm font-manrope text-hero-text-muted sm:text-base">
-          <li className="flex items-start gap-3">
-            <span className="mt-1 inline-flex h-2.5 w-2.5 flex-shrink-0 rounded-full bg-gradient-to-r from-[#9E91FF] to-[#4931FF]" />
-            <span>Automated risk-aware strategies tuned for creative income cycles.</span>
-          </li>
-          <li className="flex items-start gap-3">
-            <span className="mt-1 inline-flex h-2.5 w-2.5 flex-shrink-0 rounded-full bg-gradient-to-r from-[#9E91FF] to-[#4931FF]" />
-            <span>Self-custody vaults with real-time transparency and no hidden fees.</span>
-          </li>
-          <li className="flex items-start gap-3">
-            <span className="mt-1 inline-flex h-2.5 w-2.5 flex-shrink-0 rounded-full bg-gradient-to-r from-[#9E91FF] to-[#4931FF]" />
-            <span>Unified dashboard for plans, deposits, and performance tracking.</span>
-          </li>
-        </ul>
-      </motion.div>
     </motion.div>
 
     <motion.div

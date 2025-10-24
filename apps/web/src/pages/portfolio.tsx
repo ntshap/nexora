@@ -12,6 +12,7 @@ import Footer from "@/components/Footer";
 import { Navbar } from "@/components/Navbar";
 import { VaultActions } from "@/components/VaultActions";
 import { synthVaultAbi, useShares } from "@nexora/sdk";
+import { BottomNav } from "@/components/dashboard/BottomNav";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 const SYNTH_VAULT_ADDRESS = (process.env.NEXT_PUBLIC_SYNTH_VAULT_ADDRESS ?? "0x0000000000000000000000000000000000000000") as Address;
@@ -169,6 +170,7 @@ const PortfolioContent = () => {
         </main>
         <Footer />
       </div>
+      <BottomNav />
     </>
   );
 };
