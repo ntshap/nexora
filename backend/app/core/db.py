@@ -6,6 +6,8 @@ from sqlalchemy import text
 from sqlmodel import Session, SQLModel, create_engine
 
 from app.core.config import get_settings
+from app.models import preferences  # noqa: F401
+from app.models import tx  # noqa: F401
 
 settings = get_settings()
 engine = create_engine(settings.database_url, echo=False)

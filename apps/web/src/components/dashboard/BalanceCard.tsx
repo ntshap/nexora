@@ -5,7 +5,7 @@ type BalanceCardProps = {
   assetValue: number | null;
   isLoading?: boolean;
   error?: string | null;
-  onDeposit: () => void;
+  onDeposit?: () => void;
   onSend?: () => void;
 };
 
@@ -30,13 +30,23 @@ export const BalanceCard = ({ shares, assetValue, isLoading = false, error, onDe
       <h2 className="text-3xl font-manrope font-semibold text-hero-text">{formatCurrency(assetValue)}</h2>
       <p className="text-sm text-hero-text-muted">{formatShares(shares)}</p>
     </header>
-    {isLoading && <p className="text-sm text-hero-text-muted">Loading balance…</p>}
+    {isLoading && <p className="text-sm text-hero-text-muted">Loading balance...</p>}
     {error && !isLoading && <p className="text-sm text-red-300">{error}</p>}
     <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-      <Button onClick={onDeposit} variant="hero" className="rounded-full px-6 py-3 text-sm font-medium">
+      <Button
+        onClick={onDeposit}
+        variant="hero"
+        className="rounded-full px-6 py-3 text-sm font-medium"
+        disabled={!onDeposit}
+      >
         Deposit
       </Button>
-      <Button onClick={onSend} variant="outline" className="rounded-full px-6 py-3 text-sm font-medium" disabled={!onSend}>
+      <Button
+        onClick={onSend}
+        variant="outline"
+        className="rounded-full px-6 py-3 text-sm font-medium"
+        disabled={!onSend}
+      >
         Send
       </Button>
     </div>

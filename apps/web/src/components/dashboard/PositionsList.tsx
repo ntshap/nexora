@@ -10,12 +10,19 @@ type PositionsListProps = {
   isLoading?: boolean;
   error?: string | null;
   onViewAll: () => void;
+  onRetry?: () => void;
 };
 
 const formatCurrency = (value: number) => `$${value.toFixed(2)}`;
 const formatPercent = (value: number) => `${(value * 100).toFixed(2)}% APY`;
 
-export const PositionsList = ({ positions, isLoading = false, error, onViewAll }: PositionsListProps) => (
+export const PositionsList = ({
+  positions,
+  isLoading = false,
+  error,
+  onViewAll,
+  onRetry,
+}: PositionsListProps) => (
   <section className="rounded-3xl border border-white/5 bg-[#101123] p-6 sm:p-8 shadow-[0_20px_60px_-40px_rgba(10,12,24,0.8)]">
     <header className="mb-6 flex items-center justify-between">
       <div>
@@ -27,11 +34,24 @@ export const PositionsList = ({ positions, isLoading = false, error, onViewAll }
         onClick={onViewAll}
         className="text-sm font-medium text-hero-text hover:text-white focus:outline-none"
       >
-        View All →
+        View All {'>'}
       </button>
     </header>
-    {isLoading && <p className="text-sm text-hero-text-muted">Loading positions…</p>}
-    {error && !isLoading && <p className="text-sm text-red-300">{error}</p>}
+    {isLoading && <p className="text-sm text-hero-text-muted">Loading positions...</p>}
+    {error && !isLoading && (
+      <div className="flex flex-col gap-3 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+        <p>{error}</p>
+        {onRetry && (
+          <button
+            type="button"
+            onClick={onRetry}
+            className="self-start rounded-full border border-red-400/40 px-4 py-1 text-xs uppercase tracking-wide text-red-200 hover:bg-red-500/20"
+          >
+            Retry
+          </button>
+        )}
+      </div>
+    )}
     {!isLoading && !error && positions.length === 0 && (
       <p className="text-sm text-hero-text-muted">No positions available.</p>
     )}
@@ -60,4 +80,3 @@ export const PositionsList = ({ positions, isLoading = false, error, onViewAll }
     </div>
   </section>
 );
-

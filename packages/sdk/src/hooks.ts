@@ -5,6 +5,8 @@ import type { Address } from "viem";
 
 import { synthVaultAbi } from "./abi/synthVault";
 
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000" as const;
+
 export const useDeposit = (vaultAddress: Address) => {
   const { writeContractAsync, isPending } = useWriteContract();
 
@@ -39,5 +41,11 @@ export const useShares = (vaultAddress: Address, owner: Address) =>
     abi: synthVaultAbi,
     functionName: "balanceOf",
     args: [owner],
-    query: { enabled: Boolean(owner) },
+    query: {
+      enabled: Boolean(
+        owner &&
+          vaultAddress &&
+          vaultAddress.toLowerCase() !== ZERO_ADDRESS,
+      ),
+    },
   });

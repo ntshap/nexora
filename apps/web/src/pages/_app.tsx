@@ -1,5 +1,6 @@
 'use client';
 
+import App, { type AppContext, type AppInitialProps } from "next/app";
 import type { AppProps } from "next/app";
 import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -20,3 +21,6 @@ export default function NexoraApp({ Component, pageProps }: AppProps) {
   );
 }
 
+NexoraApp.getInitialProps = async (appContext: AppContext): Promise<AppInitialProps> => {
+  return App.getInitialProps(appContext);
+};

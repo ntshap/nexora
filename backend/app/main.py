@@ -1,17 +1,41 @@
 """FastAPI application initialisation."""
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 
-from app.api.endpoints import health, plan, portfolio, tx
+from app.api.endpoints import health, plan, portfolio, preferences, tx
+from app.core.config import get_settings
 from app.core.db import init_db
 from app.core.logger import logger
 
+settings = get_settings()
+
 init_db()
 
-app = FastAPI(title="NEXORA API", version="0.1.0")
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    logger.info("NEXORA API started")
+    try:
+        yield
+    finally:
+        logger.info("NEXORA API shut down")
+
+
+app = FastAPI(title="NEXORA API", version="0.1.0", lifespan=lifespan)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.allowed_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.include_router(health.router)
 app.include_router(plan.router)
 app.include_router(portfolio.router)
+app.include_router(preferences.router)
 app.include_router(tx.router)
 
 
@@ -25,13 +49,3 @@ async def root() -> JSONResponse:
 async def favicon() -> Response:
     """Return an empty favicon response to avoid noisy 404s."""
     return Response(status_code=204)
-
-
-@app.on_event("startup")
-async def on_startup() -> None:
-    logger.info("NEXORA API started")
-
-
-@app.on_event("shutdown")
-async def on_shutdown() -> None:
-    logger.info("NEXORA API shut down")

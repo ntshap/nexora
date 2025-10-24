@@ -13,6 +13,7 @@ type SuggestedInvestmentsListProps = {
   isLoading?: boolean;
   error?: string | null;
   onInvest: (plan: SuggestedPlan) => void;
+  onRetry?: () => void;
 };
 
 const riskLabelStyles: Record<string, string> = {
@@ -23,7 +24,13 @@ const riskLabelStyles: Record<string, string> = {
 
 const formatPercent = (value: number) => `${(value * 100).toFixed(2)}% APY`;
 
-export const SuggestedInvestmentsList = ({ plans, isLoading = false, error, onInvest }: SuggestedInvestmentsListProps) => (
+export const SuggestedInvestmentsList = ({
+  plans,
+  isLoading = false,
+  error,
+  onInvest,
+  onRetry,
+}: SuggestedInvestmentsListProps) => (
   <section className="rounded-3xl border border-white/5 bg-[#101123] p-6 sm:p-8 shadow-[0_20px_60px_-40px_rgba(10,12,24,0.8)]">
     <header className="mb-6 flex items-center justify-between">
       <div>
@@ -31,8 +38,22 @@ export const SuggestedInvestmentsList = ({ plans, isLoading = false, error, onIn
         <p className="text-sm text-hero-text-muted">Based on your selected risk preference.</p>
       </div>
     </header>
-    {isLoading && <p className="text-sm text-hero-text-muted">Generating strategies…</p>}
-    {error && !isLoading && <p className="text-sm text-red-300">{error}</p>}
+    {isLoading && <p className="text-sm text-hero-text-muted">Generating strategies???</p>}
+    {error && !isLoading && (
+      <div className="flex flex-col gap-3 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+        <p>{error}</p>
+        {onRetry && (
+          <Button
+            type="button"
+            variant="outline"
+            className="self-start rounded-full border-red-400/40 text-red-200 hover:bg-red-500/20"
+            onClick={onRetry}
+          >
+            Try again
+          </Button>
+        )}
+      </div>
+    )}
     {!isLoading && !error && plans.length === 0 && (
       <p className="text-sm text-hero-text-muted">No strategies available. Adjust your filters and try again.</p>
     )}
@@ -73,4 +94,3 @@ export const SuggestedInvestmentsList = ({ plans, isLoading = false, error, onIn
     </div>
   </section>
 );
-

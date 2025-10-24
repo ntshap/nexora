@@ -26,8 +26,8 @@ type NavbarProps = ComponentPropsWithoutRef<"section"> & Partial<NavbarConfig>;
 
 const defaultNavbar: NavbarConfig = {
   logo: {
-    url: "#",
-    src: "https://d22po4pjz3o32e.cloudfront.net/logo-image.svg",
+    url: "/",
+    src: "/logo.png",
     alt: "NEXORA Logo",
   },
   navLinks: [
@@ -95,16 +95,16 @@ const Navbar = (props: NavbarProps) => {
   const isMobile = useIsMobile();
 
   return (
-    <section className="z-[999] flex w-full items-center border-b border-hero-text/10" style={{ backgroundColor: "#060612" }}>
-      <div className="mx-auto grid size-full max-w-7xl gap-4 py-[23px] px-6 sm:px-12 lg:grid-cols-[0.375fr_1fr_0.375fr] lg:items-center lg:justify-between lg:px-0">
-        <div className="flex min-h-16 items-center justify-between px-6 md:min-h-18 lg:min-h-full lg:px-0">
+    <section className="z-[999] flex w-full items-center border-b border-hero-text/10 px-4 sm:px-8 lg:px-12" style={{ backgroundColor: "#060612" }}>
+      <div className="mx-auto grid size-full max-w-6xl gap-4 py-[20px] px-4 sm:px-8 lg:grid-cols-[0.4fr_1fr_0.4fr] lg:items-center lg:justify-between">
+        <div className="flex min-h-16 items-center justify-between md:min-h-18 lg:min-h-full">
           <a href={logo.url} className="flex items-center">
             <Image
-              src="/nexora-uploads/aec69c72-3eb2-46c3-b3ff-5567e422a175.png"
+              src={logo.src}
               alt={logo.alt ?? "NEXORA"}
-              width={120}
-              height={32}
-              className="h-8 w-auto"
+              width={160}
+              height={44}
+              className="h-11 w-auto"
               priority
             />
           </a>
@@ -204,4 +204,3 @@ const SubMenu = ({ navLink, isMobile }: { navLink: NavLink; isMobile: boolean })
 };
 
 export { Navbar };
-

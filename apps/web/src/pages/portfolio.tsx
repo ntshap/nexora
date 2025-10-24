@@ -15,6 +15,7 @@ import { synthVaultAbi, useShares } from "@nexora/sdk";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 const SYNTH_VAULT_ADDRESS = (process.env.NEXT_PUBLIC_SYNTH_VAULT_ADDRESS ?? "0x0000000000000000000000000000000000000000") as Address;
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000" as Address;
 const DECIMALS = 18;
 
 type HistoryItem = {
@@ -33,10 +34,14 @@ const PortfolioContent = () => {
   const { address, isConnected } = useAccount();
   const account = address as Address | undefined;
   const lowered = address?.toLowerCase() ?? "";
+  const hasVaultConfigured = SYNTH_VAULT_ADDRESS !== ZERO_ADDRESS;
 
   const historyQuery = useQuery<HistoryResponse>({
     queryKey: ["portfolio-history", lowered],
     queryFn: async () => {
+      if (typeof window === "undefined") {
+        return { history: [] };
+      }
       const response = await fetch(`${API_BASE}/portfolio/${lowered}`);
       if (!response.ok) {
         throw new Error("Failed to load portfolio history");
@@ -46,26 +51,27 @@ const PortfolioContent = () => {
     enabled: isConnected && Boolean(lowered),
   });
 
-  const zeroAddress = ("0x" + "0".repeat(40)) as Address;
-  const { data: sharesData } = useShares(SYNTH_VAULT_ADDRESS, account ?? zeroAddress);
+  const { data: sharesData } = useShares(SYNTH_VAULT_ADDRESS, account ?? ZERO_ADDRESS);
+  const hasShareData = typeof sharesData !== "undefined";
 
   const { data: assetsData } = useReadContract({
     address: SYNTH_VAULT_ADDRESS,
     abi: synthVaultAbi,
     functionName: "convertToAssets",
     args: [sharesData ?? 0n],
-    query: { enabled: Boolean(account) },
+    query: { enabled: Boolean(account) && hasVaultConfigured && hasShareData },
   });
 
   const { data: totalAssetsData } = useReadContract({
     address: SYNTH_VAULT_ADDRESS,
     abi: synthVaultAbi,
     functionName: "totalAssets",
+    query: { enabled: hasVaultConfigured },
   });
 
-  const shares = sharesData ? parseFloat(formatUnits(sharesData, DECIMALS)) : 0;
-  const assetValue = assetsData ? parseFloat(formatUnits(assetsData, DECIMALS)) : 0;
-  const totalAssets = totalAssetsData ? parseFloat(formatUnits(totalAssetsData, DECIMALS)) : 0;
+  const shares = hasShareData ? parseFloat(formatUnits(sharesData ?? 0n, DECIMALS)) : 0;
+  const assetValue = typeof assetsData !== "undefined" ? parseFloat(formatUnits(assetsData ?? 0n, DECIMALS)) : 0;
+  const totalAssets = typeof totalAssetsData !== "undefined" ? parseFloat(formatUnits(totalAssetsData ?? 0n, DECIMALS)) : 0;
 
   const formattedTotal = useMemo(() => `$${assetValue.toFixed(2)}`, [assetValue]);
 
@@ -169,4 +175,8 @@ const PortfolioContent = () => {
 
 export default dynamic(() => Promise.resolve(PortfolioContent), {
   ssr: false,
+});
+
+export const getServerSideProps = async () => ({
+  props: {},
 });

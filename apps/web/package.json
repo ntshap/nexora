@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "cross-env NEXT_DISABLE_SSG_TIMEOUT=1 next build",
     "start": "next start",
     "lint": "next lint",
     "build:local": "NEXT_DISABLE_SSG_TIMEOUT=1 npm run build",
