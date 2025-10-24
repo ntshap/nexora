@@ -8,7 +8,7 @@ const Footer = () => (
     <div className="max-w-7xl mx-auto">
       <div className="flex flex-col lg:flex-row justify-between items-center gap-6">
         <div className="flex flex-col items-center lg:items-start gap-2">
-          <Image src="/logo.png" alt="NEXORA Logo" width={120} height={32} className="h-8 w-auto mb-2" />
+          <Image src="/logo.png" alt="NEXORA Logo" width={180} height={48} className="h-12 w-auto mb-2" />
           <p className="text-[#646464] text-sm font-manrope font-normal">
             Intelligence. Transparency. Freedom for Creators.
           </p>
