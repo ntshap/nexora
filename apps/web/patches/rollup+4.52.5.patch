@@ -1,0 +1,40 @@
+diff --git a/node_modules/rollup/dist/native.js b/node_modules/rollup/dist/native.js
+index c5a65c3..274d172 100644
+--- a/node_modules/rollup/dist/native.js
++++ b/node_modules/rollup/dist/native.js
+@@ -58,6 +58,7 @@ const msvcLinkFilenameByArch = {
+ 	x64: 'vc_redist.x64.exe'
+ };
+ 
++const preferWasm = process.env.ROLLUP_PREFER_WASM === 'true' || process.env.ROLLUP_SKIP_NATIVE === 'true';
+ const packageBase = getPackageBase();
+ const localName = `./rollup.${packageBase}.node`;
+ const requireWithFriendlyError = id => {
+@@ -89,9 +90,24 @@ const requireWithFriendlyError = id => {
+ 	}
+ };
+ 
+-const { parse, parseAsync, xxhashBase64Url, xxhashBase36, xxhashBase16 } = requireWithFriendlyError(
+-	existsSync(path.join(__dirname, localName)) ? localName : `@rollup/rollup-${packageBase}`
+-);
++const loadBindings = () => {
++	if (preferWasm) {
++		try {
++			return require('@rollup/wasm-node/dist/native.js');
++		} catch (error) {
++			throw new Error(
++				'ROLLUP_PREFER_WASM is set but the @rollup/wasm-node package could not be loaded. ' +
++					'Ensure it is installed as a dependency.',
++				{ cause: error }
++			);
++		}
++	}
++	return requireWithFriendlyError(
++		existsSync(path.join(__dirname, localName)) ? localName : `@rollup/rollup-${packageBase}`
++	);
++};
++
++const { parse, parseAsync, xxhashBase64Url, xxhashBase36, xxhashBase16 } = loadBindings();
+ 
+ function getPackageBase() {
+ 	const imported = bindingsByPlatformAndArch[platform]?.[arch];

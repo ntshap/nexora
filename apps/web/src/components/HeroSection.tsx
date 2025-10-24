@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import { FeatureCard } from "@/components/FeatureCard";
 import { motion } from "framer-motion";
 
@@ -54,9 +54,9 @@ const features = [
 ];
 
 const HeroSection = () => (
-  <div className="min-h-screen bg-hero-bg overflow-hidden relative">
+  <section className="relative overflow-hidden bg-hero-bg">
     <video
-      className="absolute inset-0 w-full h-full object-cover saturate-0 z-0 scale-120 -translate-y-[20%]"
+      className="absolute inset-0 h-full w-full scale-110 object-cover saturate-0"
       autoPlay
       muted
       loop
@@ -70,65 +70,83 @@ const HeroSection = () => (
     </video>
 
     <div
-      className="absolute inset-0 z-[1]"
+      className="absolute inset-0"
       style={{ backgroundColor: "#060613", mixBlendMode: "color" }}
-    ></div>
+    />
 
     <motion.div
-      className="px-6 sm:px-12 lg:px-16 pt-[125px] pb-20 relative z-10"
+      className="relative z-10 mx-auto flex min-h-[calc(100vh-80px)] w-full max-w-7xl flex-col px-6 pb-16 pt-28 sm:px-12 lg:flex-row lg:items-center lg:justify-between lg:gap-16 lg:px-16 xl:pt-32"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
-      <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-12 lg:gap-16">
-          <motion.div className="flex-1 max-w-3xl" variants={itemVariants}>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-plus-jakarta font-extrabold text-hero-text leading-tight">
-              Empowering Creators
-              <br />
-              through{" "}
-              <span className="bg-gradient-text bg-clip-text text-transparent">
-                Transparent AI-Driven DeFi
-              </span>
-            </h1>
-          </motion.div>
-
-          <motion.div
-            className="flex-1 max-w-sm lg:max-w-md flex flex-col items-start lg:items-end gap-6"
-            variants={itemVariants}
+      <motion.div className="flex-1 space-y-6 text-left sm:text-center lg:text-left" variants={itemVariants}>
+        <h1 className="text-4xl font-plus-jakarta font-extrabold leading-tight text-hero-text sm:text-5xl lg:text-6xl xl:text-7xl">
+          Empowering Creators
+          <br />
+          through{" "}
+          <span className="bg-gradient-text bg-clip-text text-transparent">Transparent AI-Driven DeFi</span>
+        </h1>
+        <p className="max-w-2xl text-base font-manrope text-hero-text-muted sm:mx-auto sm:text-lg lg:mx-0 lg:text-xl">
+          NEXORA helps creative professionals build wealth through intelligent, on-chain yield plans powered by
+          transparent AI and decentralized infrastructure.
+        </p>
+        <div className="flex flex-col items-start gap-3 sm:flex-row sm:justify-center lg:justify-start">
+          <Link
+            href="/dashboard"
+            prefetch
+            className="inline-flex items-center justify-center rounded-full border border-button-border bg-gradient-hero px-8 py-3 text-base font-manrope font-semibold text-hero-text transition-all duration-300 hover:shadow-hero sm:text-lg"
           >
-            <p className="text-lg sm:text-xl text-hero-text-muted font-manrope leading-relaxed text-left lg:text-right">
-              NEXORA helps creative professionals build wealth through intelligent, on-chain yield plans powered by transparent AI and decentralized infrastructure.
-            </p>
-            <Button variant="hero" size="lg" className="rounded-full px-8 py-4 text-lg h-14 w-fit">
-              Launch App
-            </Button>
-          </motion.div>
+            Launch App
+          </Link>
+          <Link
+            href="#how-it-works"
+            className="inline-flex items-center justify-center rounded-full border border-white/10 px-8 py-3 text-base font-manrope font-semibold text-hero-text hover:border-white/30"
+          >
+            Explore How It Works
+          </Link>
         </div>
-      </div>
+      </motion.div>
+
+      <motion.div
+        className="mt-12 flex w-full max-w-lg flex-col gap-8 self-stretch rounded-[32px] border border-white/5 bg-[#0f1020]/90 p-8 backdrop-blur lg:mt-0 lg:max-w-md"
+        variants={itemVariants}
+      >
+        <h2 className="text-xl font-manrope font-semibold text-hero-text">Why creators choose NEXORA</h2>
+        <ul className="space-y-4 text-left text-sm font-manrope text-hero-text-muted sm:text-base">
+          <li className="flex items-start gap-3">
+            <span className="mt-1 inline-flex h-2.5 w-2.5 flex-shrink-0 rounded-full bg-gradient-to-r from-[#9E91FF] to-[#4931FF]" />
+            <span>Automated risk-aware strategies tuned for creative income cycles.</span>
+          </li>
+          <li className="flex items-start gap-3">
+            <span className="mt-1 inline-flex h-2.5 w-2.5 flex-shrink-0 rounded-full bg-gradient-to-r from-[#9E91FF] to-[#4931FF]" />
+            <span>Self-custody vaults with real-time transparency and no hidden fees.</span>
+          </li>
+          <li className="flex items-start gap-3">
+            <span className="mt-1 inline-flex h-2.5 w-2.5 flex-shrink-0 rounded-full bg-gradient-to-r from-[#9E91FF] to-[#4931FF]" />
+            <span>Unified dashboard for plans, deposits, and performance tracking.</span>
+          </li>
+        </ul>
+      </motion.div>
     </motion.div>
 
     <motion.div
-      className="px-6 sm:px-12 lg:px-16 py-16 lg:py-20 relative z-10"
+      id="how-it-works"
+      className="relative z-10 mx-auto w-full max-w-7xl px-6 pb-16 sm:px-12 lg:px-16"
       variants={containerVariants}
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, amount: 0.3 }}
     >
-      <div className="max-w-7xl mx-auto">
-        <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-4 overflow-visible"
-          variants={containerVariants}
-        >
-          {features.map((feature) => (
-            <motion.div key={feature.title} variants={itemVariants}>
-              <FeatureCard {...feature} />
-            </motion.div>
-          ))}
-        </motion.div>
-      </div>
+      <motion.div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4" variants={containerVariants}>
+        {features.map((feature) => (
+          <motion.div key={feature.title} variants={itemVariants}>
+            <FeatureCard {...feature} />
+          </motion.div>
+        ))}
+      </motion.div>
     </motion.div>
-  </div>
+  </section>
 );
 
 export default HeroSection;

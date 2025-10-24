@@ -1,3 +1,5 @@
+"use client";
+
 import { useReadContract, useWriteContract } from "wagmi";
 import type { Address } from "viem";
 

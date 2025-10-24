@@ -1,12 +1,8 @@
-﻿import { FormEvent, useState } from "react";
-import { useAccount, usePublicClient } from "wagmi";
-import { parseUnits, type Address } from "viem";
+import { FormEvent, useState } from "react";
+import type { Address } from "viem";
 
-import { useDeposit, useWithdraw } from "@nexora/sdk";
 import { Button } from "@/components/ui/button";
-
-const decimalPrecision = 18;
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+import { useVaultTransactions } from "@/hooks/use-vault-transactions";
 
 type VaultActionsProps = {
   vaultAddress: Address;
@@ -14,48 +10,21 @@ type VaultActionsProps = {
 };
 
 export const VaultActions = ({ vaultAddress, onComplete }: VaultActionsProps) => {
-  const { address, isConnected } = useAccount();
-  const publicClient = usePublicClient();
   const [amount, setAmount] = useState("0");
   const [message, setMessage] = useState<string | null>(null);
 
-  const { deposit, isPending: depositPending } = useDeposit(vaultAddress);
-  const { withdraw, isPending: withdrawPending } = useWithdraw(vaultAddress);
+  const { isConnected, isDepositPending, isWithdrawPending, executeDeposit, executeWithdraw } = useVaultTransactions({
+    vaultAddress,
+    onComplete,
+  });
 
-  const disabled = !isConnected || depositPending || withdrawPending;
-
-  const logTransaction = async (txType: "deposit" | "withdraw", txHash: string | null, numericAmount: number) => {
-    if (!address) return;
-    await fetch(`${API_BASE}/tx/${txType}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ address, amount: numericAmount, vault: "SynthVault", tx_hash: txHash }),
-    }).catch(() => undefined);
-  };
-
-  const handleComplete = async () => {
-    if (typeof onComplete === "function") {
-      await onComplete();
-    }
-  };
+  const disabled = !isConnected || isDepositPending || isWithdrawPending;
 
   const onDeposit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!address) return;
     try {
-      const numericAmount = parseFloat(amount);
-      if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
-        setMessage("Enter a valid amount");
-        return;
-      }
-      const value = parseUnits(amount, decimalPrecision);
-      const txHash = await deposit(value, address);
-      if (publicClient) {
-        await publicClient.waitForTransactionReceipt({ hash: txHash });
-      }
-      await logTransaction("deposit", txHash, numericAmount);
-      await handleComplete();
-      setMessage(`Deposited ${amount} mUSDC`);
+      const status = await executeDeposit(amount, { vaultLabel: "SynthVault", assetSymbol: "mUSDC" });
+      setMessage(status);
       setAmount("0");
     } catch (error) {
       setMessage((error as Error).message);
@@ -64,21 +33,9 @@ export const VaultActions = ({ vaultAddress, onComplete }: VaultActionsProps) =>
 
   const onWithdraw = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!address) return;
     try {
-      const numericAmount = parseFloat(amount);
-      if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
-        setMessage("Enter a valid amount");
-        return;
-      }
-      const value = parseUnits(amount, decimalPrecision);
-      const txHash = await withdraw(value, address, address);
-      if (publicClient) {
-        await publicClient.waitForTransactionReceipt({ hash: txHash });
-      }
-      await logTransaction("withdraw", txHash, numericAmount);
-      await handleComplete();
-      setMessage(`Withdrawn ${amount} mUSDC`);
+      const status = await executeWithdraw(amount, { vaultLabel: "SynthVault", assetSymbol: "mUSDC" });
+      setMessage(status);
       setAmount("0");
     } catch (error) {
       setMessage((error as Error).message);
@@ -99,12 +56,12 @@ export const VaultActions = ({ vaultAddress, onComplete }: VaultActionsProps) =>
       <div className="flex gap-3">
         <form onSubmit={onDeposit}>
           <Button type="submit" variant="hero" className="rounded-full px-5 py-2 text-sm" disabled={disabled}>
-            {depositPending ? "Depositing…" : "Deposit"}
+            {isDepositPending ? "Depositing…" : "Deposit"}
           </Button>
         </form>
         <form onSubmit={onWithdraw}>
           <Button type="submit" variant="hero" className="rounded-full px-5 py-2 text-sm" disabled={disabled}>
-            {withdrawPending ? "Withdrawing…" : "Withdraw"}
+            {isWithdrawPending ? "Withdrawing…" : "Withdraw"}
           </Button>
         </form>
       </div>
@@ -113,3 +70,4 @@ export const VaultActions = ({ vaultAddress, onComplete }: VaultActionsProps) =>
     </div>
   );
 };
+

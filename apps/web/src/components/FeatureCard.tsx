@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
 interface FeatureCardProps {
   title: string;
@@ -18,13 +19,7 @@ export const FeatureCard = ({
       aria-hidden="true"
     />
     <div className="flex justify-center">
-      {image && (
-        <img
-          src={image}
-          alt={title}
-          className="h-48 w-48 object-contain"
-        />
-      )}
+      {image && <Image src={image} alt={title} width={192} height={192} className="h-48 w-48 object-contain" />}
     </div>
     <div className="mt-10 flex flex-col gap-4">
       <h3

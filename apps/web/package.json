@@ -7,9 +7,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "build:local": "NEXT_DISABLE_SSG_TIMEOUT=1 npm run build"
+    "build:local": "NEXT_DISABLE_SSG_TIMEOUT=1 npm run build",
+    "test": "cross-env ROLLUP_SKIP_NATIVE=true ROLLUP_PREFER_WASM=true vitest",
+    "postinstall": "patch-package"
   },
   "dependencies": {
+    "@nexora/sdk": "file:../../packages/sdk",
     "@radix-ui/react-accordion": "^1.2.0",
     "@tanstack/react-query": "^5.56.2",
     "class-variance-authority": "^0.7.1",
@@ -21,19 +24,27 @@
     "react-dom": "18.3.1",
     "tailwind-merge": "^2.5.2",
     "viem": "^2.7.2",
-    "wagmi": "^2.12.5",
-    "@nexora/sdk": "file:../../packages/sdk"
+    "wagmi": "^2.12.5"
   },
   "devDependencies": {
+    "@rollup/wasm-node": "^4.52.5",
+    "@testing-library/jest-dom": "^6.4.3",
+    "@testing-library/react": "^16.0.0",
+    "@testing-library/user-event": "^14.5.2",
     "@types/node": "^20.11.30",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.2",
     "autoprefixer": "^10.4.20",
+    "cross-env": "^7.0.3",
     "eslint": "^8.57.0",
     "eslint-config-next": "^14.2.5",
+    "jsdom": "^24.0.0",
+    "patch-package": "^8.0.1",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.11",
     "tailwindcss-animate": "^1.0.7",
-    "typescript": "^5.5.3"
+    "typescript": "^5.5.3",
+    "vitest": "^1.6.0"
   }
 }

@@ -10,7 +10,7 @@ export const ConnectWalletButton = () => {
   const { address, isConnected, chainId } = useAccount();
   const { connect, connectors, status: connectStatus } = useConnect();
   const { disconnect } = useDisconnect();
-  const { chains, switchChainAsync, status: switchStatus } = useSwitchChain();
+  const { switchChainAsync, status: switchStatus } = useSwitchChain();
 
   const primaryConnector = useMemo(() => connectors[0], [connectors]);
   const unsupported = Boolean(chainId && chainId !== sepolia.id);

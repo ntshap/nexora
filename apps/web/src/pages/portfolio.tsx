@@ -1,5 +1,7 @@
+'use client';
+
+import dynamic from "next/dynamic";
 import Head from "next/head";
-import type { GetServerSideProps } from "next";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAccount, useReadContract } from "wagmi";
@@ -27,7 +29,7 @@ type HistoryResponse = {
   history: HistoryItem[];
 };
 
-const PortfolioPage = () => {
+const PortfolioContent = () => {
   const { address, isConnected } = useAccount();
   const account = address as Address | undefined;
   const lowered = address?.toLowerCase() ?? "";
@@ -165,8 +167,6 @@ const PortfolioPage = () => {
   );
 };
 
-export default PortfolioPage;
-
-export const getServerSideProps: GetServerSideProps = async () => ({
-  props: {},
+export default dynamic(() => Promise.resolve(PortfolioContent), {
+  ssr: false,
 });

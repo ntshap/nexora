@@ -1,10 +1,9 @@
-﻿import { useState, type ComponentPropsWithoutRef } from "react";
+import Image from "next/image";
+import { useState, type ComponentPropsWithoutRef } from "react";
 import { ConnectWalletButton } from "@/components/ConnectWalletButton";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-
-import { Button } from "@/components/ui/button";
 
 type ImageProps = {
   url?: string;
@@ -96,30 +95,27 @@ const Navbar = (props: NavbarProps) => {
   const isMobile = useIsMobile();
 
   return (
-    <section
-      className="z-[999] flex w-full items-center border-b border-hero-text/10"
-      style={{ backgroundColor: "#060612" }}
-    >
-      <div className="mx-auto max-w-7xl size-full lg:grid lg:grid-cols-[0.375fr_1fr_0.375fr] lg:items-center lg:justify-between lg:gap-4 py-[23px] px-6 sm:px-12 lg:px-0">
-        <div className="flex min-h-16 items-center justify-between px-6 lg:px-16 md:min-h-18 lg:min-h-full lg:px-0">
+    <section className="z-[999] flex w-full items-center border-b border-hero-text/10" style={{ backgroundColor: "#060612" }}>
+      <div className="mx-auto grid size-full max-w-7xl gap-4 py-[23px] px-6 sm:px-12 lg:grid-cols-[0.375fr_1fr_0.375fr] lg:items-center lg:justify-between lg:px-0">
+        <div className="flex min-h-16 items-center justify-between px-6 md:min-h-18 lg:min-h-full lg:px-0">
           <a href={logo.url} className="flex items-center">
-            <img src="/nexora-uploads/aec69c72-3eb2-46c3-b3ff-5567e422a175.png" alt={logo.alt} className="h-8" />
+            <Image
+              src="/nexora-uploads/aec69c72-3eb2-46c3-b3ff-5567e422a175.png"
+              alt={logo.alt ?? "NEXORA"}
+              width={120}
+              height={32}
+              className="h-8 w-auto"
+              priority
+            />
           </a>
           <div className="flex items-center gap-4 lg:hidden">
-            <button
-              className="-mr-2 flex size-12 flex-col items-center justify-center"
-              onClick={() => setIsMobileMenuOpen((prev) => !prev)}
-            >
+            <button className="-mr-2 flex size-12 flex-col items-center justify-center" onClick={() => setIsMobileMenuOpen((prev) => !prev)}>
               <motion.span
                 className="my-[3px] h-0.5 w-6 bg-hero-text"
                 animate={isMobileMenuOpen ? ["open", "rotatePhase"] : "closed"}
                 variants={topLineVariants}
               />
-              <motion.span
-                className="my-[3px] h-0.5 w-6 bg-hero-text"
-                animate={isMobileMenuOpen ? "open" : "closed"}
-                variants={middleLineVariants}
-              />
+              <motion.span className="my-[3px] h-0.5 w-6 bg-hero-text" animate={isMobileMenuOpen ? "open" : "closed"} variants={middleLineVariants} />
               <motion.span
                 className="my-[3px] h-0.5 w-6 bg-hero-text"
                 animate={isMobileMenuOpen ? ["open", "rotatePhase"] : "closed"}
@@ -137,7 +133,7 @@ const Navbar = (props: NavbarProps) => {
           initial="close"
           exit="close"
           transition={{ duration: 0.4 }}
-          className="overflow-hidden px-6 lg:px-16 text-center lg:flex lg:items-center lg:justify-center lg:px-0 lg:[--height-closed:auto] lg:[--height-open:auto] bg-hero-bg"
+          className="bg-hero-bg px-6 text-center lg:flex lg:items-center lg:justify-center lg:px-0 lg:[--height-closed:auto] lg:[--height-open:auto]"
         >
           {navLinks.map((navLink) =>
             navLink.subMenuLinks && navLink.subMenuLinks.length > 0 ? (
@@ -146,11 +142,11 @@ const Navbar = (props: NavbarProps) => {
               <a
                 key={navLink.title}
                 href={navLink.url}
-                className="block py-3 text-md text-hero-text font-manrope hover:text-hero-text-muted transition-colors first:pt-7 lg:px-4 lg:py-2 lg:text-base first:lg:pt-2"
+                className="block py-3 font-manrope text-md text-hero-text transition-colors first:pt-7 hover:text-hero-text-muted lg:px-4 lg:py-2 lg:text-base first:lg:pt-2"
               >
                 {navLink.title}
               </a>
-            )
+            ),
           )}
           <div className="block py-6 lg:hidden">
             <ConnectWalletButton />
@@ -168,20 +164,13 @@ const SubMenu = ({ navLink, isMobile }: { navLink: NavLink; isMobile: boolean })
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   return (
-    <section
-      onMouseEnter={() => !isMobile && setIsDropdownOpen(true)}
-      onMouseLeave={() => !isMobile && setIsDropdownOpen(false)}
-    >
+    <section onMouseEnter={() => !isMobile && setIsDropdownOpen(true)} onMouseLeave={() => !isMobile && setIsDropdownOpen(false)}>
       <button
-        className="flex w-full items-center justify-center gap-4 py-3 text-center text-md text-hero-text font-manrope hover:text-hero-text-muted transition-colors lg:w-auto lg:flex-none lg:justify-start lg:gap-2 lg:px-4 lg:py-2 lg:text-base"
+        className="flex w-full items-center justify-center gap-4 py-3 text-center font-manrope text-md text-hero-text transition-colors hover:text-hero-text-muted lg:w-auto lg:flex-none lg:justify-start lg:gap-2 lg:px-4 lg:py-2 lg:text-base"
         onClick={() => setIsDropdownOpen((prev) => !prev)}
       >
         <span>{navLink.title}</span>
-        <motion.span
-          animate={isDropdownOpen ? "rotated" : "initial"}
-          variants={{ rotated: { rotate: 180 }, initial: { rotate: 0 } }}
-          transition={{ duration: 0.3 }}
-        >
+        <motion.span animate={isDropdownOpen ? "rotated" : "initial"} variants={{ rotated: { rotate: 180 }, initial: { rotate: 0 } }} transition={{ duration: 0.3 }}>
           <ChevronDown className="h-4 w-4" />
         </motion.span>
       </button>
@@ -193,20 +182,16 @@ const SubMenu = ({ navLink, isMobile }: { navLink: NavLink; isMobile: boolean })
             exit="close"
             variants={{
               open: { visibility: "visible", opacity: "var(--opacity-open, 100%)", y: 0 },
-              close: {
-                visibility: "hidden",
-                opacity: "var(--opacity-close, 0)",
-                y: "var(--y-close, 0%)",
-              },
+              close: { visibility: "hidden", opacity: "var(--opacity-close, 0)", y: "var(--y-close, 0%)" },
             }}
             transition={{ duration: 0.2 }}
-            className="bg-hero-bg lg:absolute lg:z-50 lg:border lg:border-hero-text/10 lg:p-2 lg:[--y-close:25%] lg:rounded-lg lg:shadow-hero"
+            className="bg-hero-bg lg:absolute lg:z-50 lg:rounded-lg lg:border lg:border-hero-text/10 lg:p-2 lg:shadow-hero lg:[--y-close:25%]"
           >
             {navLink.subMenuLinks?.map((subMenuLink) => (
               <a
                 key={subMenuLink.title}
                 href={subMenuLink.url}
-                className="block py-3 text-center text-hero-text font-manrope hover:text-hero-text-muted transition-colors lg:px-4 lg:py-2 lg:text-left lg:rounded-md lg:hover:bg-hero-text/5"
+                className="block py-3 font-manrope text-hero-text transition-colors hover:text-hero-text-muted lg:rounded-md lg:px-4 lg:py-2 lg:text-left lg:hover:bg-hero-text/5"
               >
                 {subMenuLink.title}
               </a>
