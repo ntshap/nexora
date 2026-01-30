@@ -1,0 +1,144 @@
+"""Legal and compliance models."""
+
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Boolean,
+    DateTime,
+    Text,
+    ForeignKey,
+    JSON,
+)
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
+from app.db.base import Base
+
+
+class TermsAcceptance(Base):
+    """Track user acceptance of Terms of Service."""
+    
+    __tablename__ = "terms_acceptances"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    wallet_address = Column(String(42), nullable=False, index=True)
+    
+    # Terms details
+    terms_version = Column(String(20), nullable=False, default="1.0.0")
+    privacy_version = Column(String(20), nullable=False, default="1.0.0")
+    
+    # Acceptance metadata
+    ip_address = Column(String(45), nullable=True)
+    user_agent = Column(String(500), nullable=True)
+    accepted_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    
+    # Age verification
+    is_age_verified = Column(Boolean, default=False, nullable=False)
+    
+    # Relationships
+    user = relationship("User", backref="terms_acceptances")
+    
+    def __repr__(self):
+        return f"<TermsAcceptance {self.wallet_address} v{self.terms_version}>"
+
+
+class AuditLog(Base):
+    """Audit trail for all admin and critical actions."""
+    
+    __tablename__ = "audit_logs"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    wallet_address = Column(String(42), nullable=True, index=True)
+    
+    # Action details
+    action = Column(String(100), nullable=False, index=True)
+    resource_type = Column(String(50), nullable=True)
+    resource_id = Column(String(100), nullable=True)
+    
+    # Change tracking
+    old_value = Column(JSON, nullable=True)
+    new_value = Column(JSON, nullable=True)
+    
+    # Request metadata
+    ip_address = Column(String(45), nullable=True)
+    user_agent = Column(String(500), nullable=True)
+    
+    # Status
+    status = Column(String(20), default="success")  # success, failed, pending
+    error_message = Column(Text, nullable=True)
+    
+    created_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+        index=True,
+    )
+    
+    # Relationships
+    user = relationship("User", backref="audit_logs")
+    
+    def __repr__(self):
+        return f"<AuditLog {self.action} by {self.wallet_address}>"
+
+
+class GeoRestriction(Base):
+    """Track geo-blocked access attempts."""
+    
+    __tablename__ = "geo_restrictions"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    ip_address = Column(String(45), nullable=False, index=True)
+    country_code = Column(String(2), nullable=False, index=True)
+    
+    # Request details
+    path = Column(String(255), nullable=True)
+    user_agent = Column(String(500), nullable=True)
+    
+    blocked_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    
+    def __repr__(self):
+        return f"<GeoRestriction {self.country_code} {self.ip_address}>"
+
+
+class CircuitBreakerEvent(Base):
+    """Track circuit breaker triggers."""
+    
+    __tablename__ = "circuit_breaker_events"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    
+    # Event details (high_error_rate, tvl_drop, gas_spike)
+    event_type = Column(String(50), nullable=False)
+    severity = Column(String(20), nullable=False)  # warning, critical
+    
+    # Metrics at time of event
+    metrics = Column(JSON, nullable=True)
+    
+    # Action taken (paused_deposits, emergency_pause)
+    action_taken = Column(String(100), nullable=True)
+    auto_triggered = Column(Boolean, default=False)
+    
+    # Resolution
+    resolved = Column(Boolean, default=False)
+    resolved_at = Column(DateTime(timezone=True), nullable=True)
+    resolved_by = Column(String(42), nullable=True)
+    
+    created_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+        index=True,
+    )
+    
+    def __repr__(self):
+        return f"<CircuitBreakerEvent {self.event_type} {self.severity}>"

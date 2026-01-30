@@ -56,36 +56,31 @@ const features = [
 const HeroSection = () => (
   <section className="relative overflow-hidden bg-hero-bg">
     <video
-      className="absolute inset-0 h-full w-full scale-110 object-cover saturate-0"
+      className="absolute inset-0 h-full w-full scale-110 object-cover saturate-[0.8]"
       autoPlay
       muted
       loop
       playsInline
       controls={false}
     >
-      <source
-        src="https://res.cloudinary.com/da7s1izqw/video/upload/v1752106173/Cw9D8nOGuMDx0eVn02OhggPWXg_kesp06.mp4"
-        type="video/mp4"
-      />
+      <source src="/assets/hero-bg.mp4" type="video/mp4" />
     </video>
 
-    <div
-      className="absolute inset-0"
-      style={{ backgroundColor: "#060613", mixBlendMode: "color" }}
-    />
+    <div className="absolute inset-0 bg-gradient-to-br from-[#05050f]/95 via-[#09081d]/85 to-[#05050f]/95" />
 
     <motion.div
-      className="relative z-10 mx-auto flex min-h-[calc(100vh-80px)] w-full max-w-7xl flex-col px-6 pb-16 pt-28 sm:px-12 lg:flex-row lg:items-center lg:justify-between lg:gap-16 lg:px-16 xl:pt-32"
+      className="relative z-10 mx-auto flex min-h-[calc(100vh-80px)] w-full max-w-7xl flex-col gap-12 px-6 pb-16 pt-28 sm:px-12 lg:flex-row lg:items-center lg:justify-between lg:gap-16 lg:px-16 xl:pt-32"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
       <motion.div className="flex-1 space-y-6 text-left sm:text-center lg:text-left" variants={itemVariants}>
         <h1 className="text-4xl font-plus-jakarta font-extrabold leading-tight text-hero-text sm:text-5xl lg:text-6xl xl:text-7xl">
-          Empowering Creators
-          <br />
-          through{" "}
-          <span className="bg-gradient-text bg-clip-text text-transparent">Transparent AI-Driven DeFi</span>
+          <span className="inline-block bg-gradient-text bg-clip-text text-transparent bg-[length:200%_200%] bg-[position:0%_50%] animate-gradient-text">
+            Empowering Creators
+            <br />
+            through Transparent AI-Driven DeFi
+          </span>
         </h1>
         <p className="max-w-2xl text-base font-manrope text-hero-text-muted sm:mx-auto sm:text-lg lg:mx-0 lg:text-xl">
           NEXORA helps creative professionals build wealth through intelligent, on-chain yield plans powered by
@@ -94,7 +89,6 @@ const HeroSection = () => (
         <div className="flex flex-col items-start gap-3 sm:flex-row sm:justify-center lg:justify-start">
           <Link
             href="/dashboard"
-            prefetch
             className="inline-flex items-center justify-center rounded-full border border-button-border bg-gradient-hero px-8 py-3 text-base font-manrope font-semibold text-hero-text transition-all duration-300 hover:shadow-hero sm:text-lg"
           >
             Launch App
@@ -107,7 +101,6 @@ const HeroSection = () => (
           </Link>
         </div>
       </motion.div>
-
     </motion.div>
 
     <motion.div

@@ -7,6 +7,8 @@ import { WagmiProvider } from "wagmi";
 
 import "@/styles/globals.css";
 import { wagmiConfig } from "@/utils/wagmi";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ComplianceGate } from "@/components/legal/ComplianceGate";
 
 export default function NexoraApp({ Component, pageProps }: AppProps) {
   const [queryClient] = useState(
@@ -16,16 +18,25 @@ export default function NexoraApp({ Component, pageProps }: AppProps) {
           queries: {
             staleTime: 60 * 1000,
             refetchOnWindowFocus: false,
+            retry: 2,
+            retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+          },
+          mutations: {
+            retry: 1,
           },
         },
       }),
   );
 
   return (
-    <WagmiProvider config={wagmiConfig}>
-      <QueryClientProvider client={queryClient}>
-        <Component {...pageProps} />
-      </QueryClientProvider>
-    </WagmiProvider>
+    <ErrorBoundary>
+      <WagmiProvider config={wagmiConfig}>
+        <QueryClientProvider client={queryClient}>
+          <ComplianceGate>
+            <Component {...pageProps} />
+          </ComplianceGate>
+        </QueryClientProvider>
+      </WagmiProvider>
+    </ErrorBoundary>
   );
 }

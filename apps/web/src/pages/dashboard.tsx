@@ -5,7 +5,7 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useAccount, useReadContract } from "wagmi";
+import { useAccount, useChainId, useReadContract } from "wagmi";
 import type { Address } from "viem";
 import { formatUnits } from "viem";
 
@@ -18,48 +18,41 @@ import { DepositDialog } from "@/components/dashboard/DepositDialog";
 import type { SuggestedPlan } from "@/components/dashboard/SuggestedInvestmentsList";
 import { SuggestedInvestmentsList } from "@/components/dashboard/SuggestedInvestmentsList";
 import { PositionsList } from "@/components/dashboard/PositionsList";
+import { ConfidenceIndicators } from "@/components/dashboard/ConfidenceIndicators";
 import { WithdrawDialog } from "@/components/dashboard/WithdrawDialog";
 import { Button } from "@/components/ui/button";
 import { synthVaultAbi, useShares } from "@nexora/sdk";
+import {
+  ApiError,
+  fetchPortfolio,
+  fetchRiskPreference,
+  generatePlan,
+  type PlanResponse,
+  type PortfolioResponse,
+  type PreferencePayload,
+  type RiskPreferenceResponse,
+  updateRiskPreference,
+} from "@/utils/api-client";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 const SYNTH_VAULT_ADDRESS = (process.env.NEXT_PUBLIC_SYNTH_VAULT_ADDRESS ?? "0x0000000000000000000000000000000000000000") as Address;
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000" as Address;
 const DECIMALS = 18;
+const RAW_SUPPORTED_CHAIN_ID = Number.parseInt(process.env.NEXT_PUBLIC_CHAIN_ID ?? "", 10);
+const SUPPORTED_CHAIN_ID = Number.isNaN(RAW_SUPPORTED_CHAIN_ID) ? null : RAW_SUPPORTED_CHAIN_ID;
+const KNOWN_CHAIN_LABELS: Record<number, string> = {
+  1: "Ethereum Mainnet",
+  5: "Goerli",
+  10: "Optimism",
+  56: "BSC",
+  137: "Polygon",
+  8453: "Base",
+  11155111: "Sepolia",
+};
+const SUPPORTED_CHAIN_LABEL = SUPPORTED_CHAIN_ID ? KNOWN_CHAIN_LABELS[SUPPORTED_CHAIN_ID] ?? `Chain ID ${SUPPORTED_CHAIN_ID}` : "supported network";
 
 type RiskLevel = "low" | "medium" | "high";
 
-type PlanResponse = {
-  plans: SuggestedPlan[];
-};
-
-type PortfolioPosition = {
-  vault: string;
-  shares: number;
-  asset_value: number;
-  apy: number;
-};
-
-type PortfolioResponse = {
-  owner: string;
-  total_value: number;
-  positions: PortfolioPosition[];
-};
-
-type RiskPreference = {
-  address: string;
-  risk_level: RiskLevel;
-  risk_score: number;
-  horizon_months: number;
-  stablecoin_preference: string;
-};
-
-type PreferencePayload = {
-  risk_level: RiskLevel;
-  risk_score: number;
-  horizon_months: number;
-  stablecoin_preference: string;
-};
+type RiskPreference = Omit<RiskPreferenceResponse, "risk_level"> & { risk_level: RiskLevel };
 
 const riskOptions: { label: string; value: RiskLevel; riskScore: number }[] = [
   { label: "Low", value: "low", riskScore: 3 },
@@ -77,12 +70,51 @@ const riskButtonClasses = (isActive: boolean) =>
     isActive ? "bg-gradient-hero text-hero-text shadow-hero" : "border border-white/10 text-hero-text-muted hover:text-hero-text"
   }`;
 
+const toRiskLevel = (value: string): RiskLevel => {
+  if (value === "low" || value === "medium" || value === "high") {
+    return value;
+  }
+  return "medium";
+};
+
+const mapRiskPreferenceResponse = (payload: RiskPreferenceResponse | null): RiskPreference | null => {
+  if (!payload) {
+    return null;
+  }
+  return {
+    ...payload,
+    risk_level: toRiskLevel(payload.risk_level),
+  };
+};
+
+const mapPlanResponse = (response: PlanResponse | null): SuggestedPlan[] =>
+  response?.plans?.map((plan) => ({
+    name: plan.name,
+    risk_level: toRiskLevel(plan.risk_level),
+    est_apy: Number.isFinite(plan.est_apy) ? plan.est_apy : 0,
+    allocations: plan.allocations ?? {},
+    rationale: plan.rationale ?? "No rationale provided.",
+  })) ?? [];
+
+const extractErrorMessage = (error: unknown, fallback: string) => {
+  if (error instanceof ApiError) {
+    return error.message;
+  }
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+  return fallback;
+};
+
 const DashboardContent = () => {
   const router = useRouter();
   const { address, isConnected } = useAccount();
+  const chainId = useChainId();
   const queryClient = useQueryClient();
   const lowered = address?.toLowerCase() ?? "";
   const hasVaultConfigured = SYNTH_VAULT_ADDRESS !== ZERO_ADDRESS;
+  const isOnSupportedChain = !SUPPORTED_CHAIN_ID || chainId === SUPPORTED_CHAIN_ID;
+  const networkWarning = isConnected && !isOnSupportedChain;
   const [riskLevel, setRiskLevel] = useState<RiskLevel>("medium");
   const [hasSyncedPreference, setHasSyncedPreference] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -114,34 +146,24 @@ const DashboardContent = () => {
 
   const hasAssetData = typeof assetsData !== "undefined";
 
-  const preferenceQuery = useQuery<RiskPreference | null>({
+  const preferenceQuery = useQuery<RiskPreference | null, ApiError>({
     queryKey: ["dashboard-preference", lowered],
     enabled: isConnected && Boolean(lowered),
     retry: false,
-    queryFn: async () => {
-      const response = await fetch(`${API_BASE}/preferences/${lowered}`);
-      if (response.status === 404) {
-        return null;
-      }
-      if (!response.ok) {
-        throw new Error("Failed to load saved preferences");
-      }
-      return response.json();
-    },
+    queryFn: async () => mapRiskPreferenceResponse(await fetchRiskPreference(lowered)),
   });
 
-  const preferenceMutation = useMutation<RiskPreference, Error, PreferencePayload>({
+  const preferenceMutation = useMutation<RiskPreference, ApiError, PreferencePayload>({
     mutationFn: async (payload) => {
-      const response = await fetch(`${API_BASE}/preferences/${lowered}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!response.ok) {
-        const message = (await response.json().catch(() => null))?.detail ?? "Failed to save preference";
-        throw new Error(message);
+      if (!lowered) {
+        throw new ApiError("Wallet address required to save preferences.");
       }
-      return response.json();
+      const response = await updateRiskPreference(lowered, payload);
+      const mapped = mapRiskPreferenceResponse(response);
+      if (!mapped) {
+        throw new ApiError("Failed to parse saved preference response.");
+      }
+      return mapped;
     },
     onSuccess: (data) => {
       queryClient.setQueryData(["dashboard-preference", lowered], data);
@@ -151,31 +173,21 @@ const DashboardContent = () => {
     },
     onError: (mutationError) => {
       setStatusTone("error");
-      setStatusMessage(mutationError.message);
+      setStatusMessage(extractErrorMessage(mutationError, "Unable to save preference. Please retry."));
     },
   });
 
-  const planQuery = useQuery<PlanResponse>({
+  const planQuery = useQuery<{ plans: SuggestedPlan[] }, ApiError>({
     queryKey: ["dashboard-plan", riskLevel, lowered],
     enabled: isConnected,
+    retry: 1,
     queryFn: async () => {
       if (typeof window === "undefined") {
-        return { plans: [] };
+        return { plans: [] as SuggestedPlan[] };
       }
       const selected = riskOptions.find((option) => option.value === riskLevel) ?? riskOptions[1];
-      const response = await fetch(`${API_BASE}/plan/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          risk_score: selected.riskScore,
-          horizon_months: PLAN_DEFAULTS.horizonMonths,
-          stablecoin_preference: PLAN_DEFAULTS.stablecoin,
-        }),
-      });
-      if (!response.ok) {
-        throw new Error("Failed to generate investment strategies");
-      }
-      return response.json();
+      const response = await generatePlan(selected.riskScore, PLAN_DEFAULTS.horizonMonths, PLAN_DEFAULTS.stablecoin);
+      return { plans: mapPlanResponse(response) };
     },
   });
 
@@ -218,18 +230,22 @@ const DashboardContent = () => {
     [isConnected, lowered, preferenceMutation, riskLevel],
   );
 
-  const portfolioQuery = useQuery<PortfolioResponse>({
+  const portfolioQuery = useQuery<PortfolioResponse, ApiError>({
     queryKey: ["dashboard-portfolio", lowered],
     enabled: isConnected && Boolean(lowered),
+    retry: 1,
     queryFn: async () => {
       if (typeof window === "undefined") {
         return { owner: lowered, total_value: 0, positions: [] };
       }
-      const response = await fetch(`${API_BASE}/portfolio/${lowered}`);
-      if (!response.ok) {
-        throw new Error("Failed to load portfolio");
+      try {
+        return await fetchPortfolio(lowered);
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 404) {
+          return { owner: lowered, total_value: 0, positions: [] };
+        }
+        throw error;
       }
-      return response.json();
     },
   });
 
@@ -243,29 +259,90 @@ const DashboardContent = () => {
     return Number.parseFloat(formatUnits(assetsData ?? 0n, DECIMALS));
   }, [assetsData, hasAssetData]);
 
-  const canTransact = isConnected && hasVaultConfigured;
+  const canTransact = isConnected && hasVaultConfigured && isOnSupportedChain;
 
   const showVaultUnavailableMessage = useCallback(() => {
     setStatusTone("error");
-    setStatusMessage("Vault interactions are unavailable. Connect your wallet and verify the vault address.");
+    const message = !hasVaultConfigured
+      ? "Vault address missing. Update your environment variables to enable vault interactions."
+      : !isConnected
+        ? "Connect your wallet to interact with the vault."
+        : !isOnSupportedChain
+          ? `Switch to ${SUPPORTED_CHAIN_LABEL} to interact with the vault.`
+          : "Vault interactions are temporarily unavailable. Please try again.";
+    setStatusMessage(message);
     setTimeout(() => setStatusMessage(null), 5000);
-  }, []);
+  }, [hasVaultConfigured, isConnected, isOnSupportedChain]);
 
   const balanceError = useMemo(() => {
     if (!hasVaultConfigured) {
       return "Vault address missing. Update NEXT_PUBLIC_SYNTH_VAULT_ADDRESS to view balances.";
     }
+    if (networkWarning) {
+      return `Switch to ${SUPPORTED_CHAIN_LABEL} to view balances.`;
+    }
     if (isAssetsError) {
-      return (assetsError as Error).message;
+      return extractErrorMessage(assetsError, "Unable to load vault balance.");
     }
     return null;
-  }, [assetsError, hasVaultConfigured, isAssetsError]);
+  }, [assetsError, hasVaultConfigured, isAssetsError, networkWarning]);
 
   const isSavingPreference = preferenceMutation.isPending;
 
   const planErrorMessage = planQuery.isError
-    ? (planQuery.error as Error).message ?? "Unable to generate strategies right now."
+    ? extractErrorMessage(planQuery.error, "Unable to generate strategies right now.")
     : null;
+
+  const portfolioErrorMessage = portfolioQuery.isError
+    ? extractErrorMessage(portfolioQuery.error, "Unable to load portfolio data right now.")
+    : null;
+
+  const portfolioPositions = portfolioQuery.data?.positions ?? [];
+  const activePlan =
+    planQuery.data?.plans?.find((plan) => plan.risk_level === riskLevel) ?? planQuery.data?.plans?.[0] ?? null;
+
+  const blendedApy = portfolioPositions.length
+    ? portfolioPositions.reduce((total, item) => total + item.apy, 0) / portfolioPositions.length
+    : activePlan?.est_apy ?? null;
+
+  const statCards = useMemo(
+    () => [
+      {
+        label: "Vault Balance",
+        value:
+          assetValue !== null
+            ? `$${assetValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+            : "--",
+        hint: "Live conversion of SynthVault shares to assets.",
+      },
+      {
+        label: "Shares Held",
+        value:
+          shares !== null
+            ? `${shares.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} shares`
+            : "--",
+        hint: "SynthVault shares currently in your wallet.",
+      },
+      {
+        label: "Strategy APY",
+        value:
+          blendedApy !== null
+            ? `${(blendedApy * 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`
+            : "--",
+        hint: portfolioPositions.length
+          ? "Weighted average APY across your active positions."
+          : "Estimate based on the selected recommendation.",
+      },
+    ],
+    [assetValue, blendedApy, portfolioPositions.length, shares],
+  );
+
+  const activeAllocations = useMemo(() => {
+    if (!activePlan) return [];
+    return Object.entries(activePlan.allocations)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 3);
+  }, [activePlan]);
 
   const handleDepositOpen = useCallback(
     (plan?: SuggestedPlan) => {
@@ -313,6 +390,11 @@ const DashboardContent = () => {
             {statusMessage}
           </div>
         )}
+        {networkWarning && (
+          <div className="mx-auto mt-4 max-w-3xl rounded-2xl border border-amber-400/40 bg-amber-500/10 px-6 py-3 text-center text-sm text-amber-200">
+            Switch to {SUPPORTED_CHAIN_LABEL} to sync balances and execute transactions.
+          </div>
+        )}
         <main className="px-6 py-12 sm:px-12 lg:px-[100px] lg:py-16">
           <section className="mx-auto flex w-full max-w-6xl flex-col gap-8">
             {!isConnected ? (
@@ -327,6 +409,19 @@ const DashboardContent = () => {
                   <h1 className="text-3xl font-plus-jakarta font-extrabold sm:text-4xl">Welcome back</h1>
                   <p className="text-hero-text-muted">Monitor your vault balance and explore fresh strategies in one glance.</p>
                 </header>
+                <ConfidenceIndicators />
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  {statCards.map((stat) => (
+                    <div
+                      key={stat.label}
+                      className="rounded-[28px] border border-white/5 bg-gradient-to-br from-[#11122a]/90 via-[#0f132f]/85 to-[#0b0d1f]/90 p-6 shadow-[0_30px_80px_-60px_rgba(20,24,60,0.8)]"
+                    >
+                      <p className="text-xs uppercase tracking-[0.3em] text-hero-text-muted">{stat.label}</p>
+                      <p className="mt-3 text-3xl font-plus-jakarta font-semibold text-hero-text">{stat.value}</p>
+                      <p className="mt-2 text-xs text-hero-text-muted">{stat.hint}</p>
+                    </div>
+                  ))}
+                </div>
                 <div className="grid gap-8 lg:grid-cols-[1.4fr_1fr]">
                   <div className="grid gap-6">
                     <BalanceCard
@@ -337,11 +432,14 @@ const DashboardContent = () => {
                       onDeposit={canTransact ? () => handleDepositOpen() : undefined}
                       onSend={canTransact ? handleWithdrawOpen : undefined}
                     />
-                    <div className="rounded-3xl border border-white/5 bg-[#101123] p-6 sm:p-8 shadow-[0_20px_60px_-40px_rgba(10,12,24,0.8)]">
-                      <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="rounded-[32px] border border-white/5 bg-gradient-to-br from-[#101123]/80 via-[#131537]/80 to-[#0a0c22]/90 p-6 sm:p-8 shadow-[0_25px_70px_-50px_rgba(20,18,55,0.9)]">
+                      <header className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                         <div>
-                          <h2 className="text-2xl font-plus-jakarta font-semibold text-hero-text">Risk Preference</h2>
-                          <p className="text-sm text-hero-text-muted">Tune recommendations based on your comfort level.</p>
+                          <span className="inline-flex items-center rounded-full bg-[#1c1f3d] px-3 py-1 text-xs uppercase tracking-wide text-[#8B82FF]">
+                            Strategy controls
+                          </span>
+                          <h2 className="mt-2 text-2xl font-plus-jakarta font-semibold text-hero-text">Risk Preference</h2>
+                          <p className="text-sm text-hero-text-muted">Adjust the plan mix to match your creative income cycles.</p>
                         </div>
                         <div className="flex flex-wrap gap-2">
                           {riskOptions.map((option) => (
@@ -357,14 +455,47 @@ const DashboardContent = () => {
                           ))}
                         </div>
                       </header>
-                      <Button
-                        variant="outline"
-                        className="rounded-full border-white/10 bg-transparent px-6 py-3 text-sm text-hero-text hover:bg-white/5"
-                        onClick={() => planQuery.refetch()}
-                        disabled={planQuery.isFetching}
-                      >
-                        {planQuery.isFetching ? "Refreshing..." : "Refresh Suggestions"}
-                      </Button>
+                      {activePlan && (
+                        <div className="mb-6 rounded-2xl border border-white/5 bg-[#151734]/70 p-5 text-left">
+                          <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                            <div>
+                              <p className="text-xs uppercase tracking-[0.25em] text-hero-text-muted">Active recommendation</p>
+                              <p className="text-lg font-manrope font-semibold text-hero-text">{activePlan.name}</p>
+                            </div>
+                            <p className="text-sm font-manrope text-hero-text-muted">
+                              {(activePlan.est_apy * 100).toFixed(2)}% target APY
+                            </p>
+                          </div>
+                          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                            {activeAllocations.map(([label, weight]) => (
+                              <div key={label} className="rounded-xl bg-[#1d1f3f]/70 px-4 py-3">
+                                <p className="text-xs uppercase tracking-wide text-hero-text-muted">{label}</p>
+                                <p className="mt-1 text-lg font-plus-jakarta font-semibold text-hero-text">
+                                  {Math.round(weight * 100)}%
+                                </p>
+                              </div>
+                            ))}
+                            {activeAllocations.length === 0 && (
+                              <p className="rounded-xl border border-dashed border-white/10 px-4 py-3 text-sm text-hero-text-muted">
+                                Plan allocations will appear after refreshing suggestions.
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <Button
+                          variant="outline"
+                          className="rounded-full border-white/10 bg-transparent px-6 py-3 text-sm text-hero-text hover:bg-white/5"
+                          onClick={() => planQuery.refetch()}
+                          disabled={planQuery.isFetching}
+                        >
+                          {planQuery.isFetching ? "Refreshing..." : "Refresh Suggestions"}
+                        </Button>
+                        {isSavingPreference && (
+                          <p className="text-xs text-hero-text-muted">Saving your preferred risk level…</p>
+                        )}
+                      </div>
                     </div>
                     <SuggestedInvestmentsList
                       plans={planQuery.data?.plans ?? []}
@@ -377,7 +508,7 @@ const DashboardContent = () => {
                   <PositionsList
                     positions={portfolioQuery.data?.positions ?? []}
                     isLoading={portfolioQuery.isFetching && !portfolioQuery.data}
-                    error={portfolioQuery.isError ? (portfolioQuery.error as Error).message : null}
+                    error={portfolioErrorMessage}
                     onViewAll={() => {
                       router.push("/portfolio").catch(() => undefined);
                     }}

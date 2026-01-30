@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export type SuggestedPlan = {
   name: string;
@@ -38,7 +39,17 @@ export const SuggestedInvestmentsList = ({
         <p className="text-sm text-hero-text-muted">Based on your selected risk preference.</p>
       </div>
     </header>
-    {isLoading && <p className="text-sm text-hero-text-muted">Generating strategies???</p>}
+    {isLoading && (
+      <div className="mt-4 grid gap-4">
+        {Array.from({ length: 2 }).map((_, index) => (
+          <div key={index} className="rounded-2xl border border-white/5 bg-[#141431] p-5">
+            <Skeleton className="mb-4 h-6 w-40 bg-white/10" />
+            <Skeleton className="mb-2 h-12 w-full bg-white/5" />
+            <Skeleton className="h-32 w-full bg-white/5" />
+          </div>
+        ))}
+      </div>
+    )}
     {error && !isLoading && (
       <div className="flex flex-col gap-3 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
         <p>{error}</p>
@@ -55,42 +66,52 @@ export const SuggestedInvestmentsList = ({
       </div>
     )}
     {!isLoading && !error && plans.length === 0 && (
-      <p className="text-sm text-hero-text-muted">No strategies available. Adjust your filters and try again.</p>
+      <div className="flex flex-col items-start gap-4 rounded-2xl border border-white/10 bg-white/5 px-5 py-6 text-sm text-hero-text-muted">
+        <p>No strategies available for this risk mix just yet. Refresh suggestions or switch risk levels to discover more options.</p>
+        {onRetry && (
+          <Button variant="hero" className="rounded-full px-5 py-2 text-sm font-medium" onClick={onRetry}>
+            Refresh Suggestions
+          </Button>
+        )}
+      </div>
     )}
     <div className="mt-4 grid gap-4">
-      {plans.map((plan) => {
-        const riskClass = riskLabelStyles[plan.risk_level] ?? "bg-white/5 text-hero-text border border-white/10";
-        return (
-          <article
-            key={plan.name}
-            className="flex flex-col gap-4 rounded-2xl border border-white/5 bg-[#141431] p-5 transition hover:border-white/10"
-          >
-            <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-              <div>
-                <h3 className="text-xl font-manrope font-semibold text-hero-text">{plan.name}</h3>
-                <p className="text-sm text-hero-text-muted">{plan.rationale}</p>
-              </div>
-              <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs uppercase tracking-wide ${riskClass}`}>
-                {plan.risk_level} risk
-              </span>
-            </div>
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-2xl font-semibold text-hero-text">{formatPercent(plan.est_apy)}</p>
-              <Button variant="hero" className="rounded-full px-5 py-2 text-sm font-medium" onClick={() => onInvest(plan)}>
-                Invest
-              </Button>
-            </div>
-            <div className="grid gap-2 text-xs text-hero-text-muted sm:grid-cols-2">
-              {Object.entries(plan.allocations).map(([label, weight]) => (
-                <div key={label} className="flex items-center justify-between rounded-xl border border-white/5 bg-white/5 px-4 py-2">
-                  <span>{label}</span>
-                  <span>{Math.round(weight * 100)}%</span>
+      {!isLoading &&
+        plans.map((plan) => {
+          const riskClass = riskLabelStyles[plan.risk_level] ?? "bg-white/5 text-hero-text border border-white/10";
+          return (
+            <article
+              key={plan.name}
+              className="flex flex-col gap-6 rounded-2xl border border-white/5 bg-[#141431] p-5 transition hover:border-white/10"
+            >
+              <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                <div>
+                  <h3 className="text-xl font-manrope font-semibold text-hero-text">{plan.name}</h3>
+                  <p className="text-sm text-hero-text-muted">{plan.rationale}</p>
                 </div>
-              ))}
-            </div>
-          </article>
-        );
-      })}
+                <span
+                  className={`inline-flex min-w-[120px] items-center justify-center rounded-full px-3 py-1 text-xs uppercase tracking-wide ${riskClass}`}
+                >
+                  {plan.risk_level.toUpperCase()} risk
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="text-2xl font-semibold text-hero-text">{formatPercent(plan.est_apy)}</p>
+                <Button variant="hero" className="rounded-full px-5 py-2 text-sm font-medium" onClick={() => onInvest(plan)}>
+                  Invest
+                </Button>
+              </div>
+              <div className="grid gap-2 text-xs text-hero-text-muted sm:grid-cols-2">
+                {Object.entries(plan.allocations).map(([label, weight]) => (
+                  <div key={label} className="flex items-center justify-between rounded-xl border border-white/5 bg-white/5 px-4 py-2">
+                    <span>{label}</span>
+                    <span>{Math.round(weight * 100)}%</span>
+                  </div>
+                ))}
+              </div>
+            </article>
+          );
+        })}
     </div>
   </section>
 );

@@ -8,6 +8,7 @@ from sqlmodel import Session, SQLModel, create_engine
 from app.core.config import get_settings
 from app.models import preferences  # noqa: F401
 from app.models import tx  # noqa: F401
+from app.models import user  # noqa: F401
 
 settings = get_settings()
 engine = create_engine(settings.database_url, echo=False)
@@ -17,12 +18,16 @@ def init_db() -> None:
     """Create database tables."""
     SQLModel.metadata.create_all(engine)
     with engine.begin() as connection:
-        columns = {
-            row[1]
-            for row in connection.execute(text("PRAGMA table_info(transactionlog);"))
-        }
-        if "tx_hash" not in columns:
-            connection.execute(text("ALTER TABLE transactionlog ADD COLUMN tx_hash VARCHAR(80)"))
+        result = connection.execute(
+            text("SELECT name FROM sqlite_master WHERE type='table' AND name='transactionlog';")
+        )
+        if result.fetchone():
+            columns = {
+                row[1]
+                for row in connection.execute(text("PRAGMA table_info(transactionlog);"))
+            }
+            if "tx_hash" not in columns:
+                connection.execute(text("ALTER TABLE transactionlog ADD COLUMN tx_hash VARCHAR(80)"))
 
 
 def get_session() -> Generator[Session, None, None]:
