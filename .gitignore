@@ -40,3 +40,13 @@ contracts/out
 *.njsproj
 *.sln
 *.sw?
+
+# Environment files (sensitive)
+.env
+.env.*
+!.env.example
+
+# Documentation files (private - keep only README)
+*.md
+!README.md
+!**/README.md
