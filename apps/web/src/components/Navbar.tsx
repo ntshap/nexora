@@ -31,7 +31,20 @@ const defaultNavbar: NavbarConfig = {
     src: "/logo.png",
     alt: "NEXORA Logo",
   },
-  navLinks: [],
+  navLinks: [
+    {
+      url: "/about",
+      title: "About"
+    },
+    {
+      url: "/blog",
+      title: "Blog"
+    },
+    {
+      url: "/plans",
+      title: "Plans"
+    }
+  ],
 };
 
 const topLineVariants = {
