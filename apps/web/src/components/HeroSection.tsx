@@ -77,9 +77,7 @@ const HeroSection = () => (
       <motion.div className="flex-1 space-y-6 text-left sm:text-center lg:text-left" variants={itemVariants}>
         <h1 className="text-4xl font-plus-jakarta font-extrabold leading-tight text-hero-text sm:text-5xl lg:text-6xl xl:text-7xl">
           <span className="inline-block bg-gradient-text bg-clip-text text-transparent bg-[length:200%_200%] bg-[position:0%_50%] animate-gradient-text">
-            Empowering Creators
-            <br />
-            through Transparent AI-Driven DeFi
+            AI-Driven DeFi Platform for Creative Professionals
           </span>
         </h1>
         <p className="max-w-2xl text-base font-manrope text-hero-text-muted sm:mx-auto sm:text-lg lg:mx-0 lg:text-xl">

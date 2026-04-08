@@ -44,8 +44,20 @@ const team = [
 const AboutPage = () => (
   <>
     <Head>
-      <title>About NEXORA</title>
-      <meta name="description" content="Learn more about the mission and team behind NEXORA." />
+      <title>About NEXORA - AI-Driven DeFi Platform for Creative Professionals</title>
+      <meta name="description" content="Learn about NEXORA's mission to help creative professionals grow wealth through transparent, AI-driven DeFi strategies with non-custodial security." />
+      <link rel="canonical" href="https://nexora.app/about" />
+      
+      <meta property="og:title" content="About NEXORA - AI-Driven DeFi Platform for Creative Professionals" />
+      <meta property="og:description" content="Learn about NEXORA's mission to help creative professionals grow wealth through transparent, AI-driven DeFi strategies with non-custodial security." />
+      <meta property="og:type" content="website" />
+      <meta property="og:url" content="https://nexora.app/about" />
+      <meta property="og:image" content="https://nexora.app/logo.png" />
+      
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content="About NEXORA - AI-Driven DeFi Platform for Creative Professionals" />
+      <meta name="twitter:description" content="Learn about NEXORA's mission to help creative professionals grow wealth through transparent, AI-driven DeFi strategies with non-custodial security." />
+      <meta name="twitter:image" content="https://nexora.app/logo.png" />
     </Head>
     <div className="min-h-screen bg-hero-bg text-hero-text">
       <Navbar />
